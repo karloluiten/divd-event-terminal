@@ -1,0 +1,100 @@
+<svg viewBox="0 0 1024 1024" width="1024" height="1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="38%" r="80%">
+      <stop offset="0%" stop-color="#0e1710"/>
+      <stop offset="100%" stop-color="#060a07"/>
+    </radialGradient>
+    <linearGradient id="title" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#b9ffcf"/>
+      <stop offset="55%" stop-color="#5ff09a"/>
+      <stop offset="100%" stop-color="#36d6c8"/>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="2.4" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <pattern id="scan" width="3" height="3" patternUnits="userSpaceOnUse">
+      <rect width="3" height="3" fill="none"/>
+      <rect width="3" height="1" fill="#000000" opacity="0.18"/>
+    </pattern>
+  </defs>
+
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+
+  <!-- giant watermark -->
+  <text x="512" y="660" text-anchor="middle" font-family="'DejaVu Sans Mono', monospace"
+        font-size="520" font-weight="bold" fill="#0fff7a" opacity="0.04">{}</text>
+
+  <!-- window chrome -->
+  <rect x="28" y="28" width="968" height="968" rx="16" fill="#0a110b" stroke="#1f8a45" stroke-width="1.5"/>
+  <rect x="28" y="28" width="968" height="46" rx="16" fill="#0d1810"/>
+  <rect x="28" y="58" width="968" height="16" fill="#0d1810"/>
+  <line x1="28" y1="74" x2="996" y2="74" stroke="#1f8a45" stroke-width="1.2"/>
+  <circle cx="56" cy="51" r="6" fill="#ff5f56"/>
+  <circle cx="78" cy="51" r="6" fill="#ffbd2e"/>
+  <circle cx="100" cy="51" r="6" fill="#27c93f"/>
+  <text x="128" y="56" font-family="'DejaVu Sans Mono', monospace" font-size="15" fill="#7fd9a0">idea_box.txt — DIVD kiosk @ wiccon</text>
+  <text x="968" y="56" text-anchor="end" font-family="'DejaVu Sans Mono', monospace" font-size="13" fill="#3f7a55">● rec</text>
+
+  <!-- heading -->
+  <text x="56" y="124" font-family="'DejaVu Sans Mono', monospace" font-size="42" font-weight="bold"
+        fill="url(#title)" filter="url(#glow)">DIGITAL IDEA BOX</text>
+  <text x="58" y="152" font-family="'DejaVu Sans Mono', monospace" font-size="14" fill="#4f9c6c">// raw dump from the idea kiosk · lightly sorted, fully unhinged</text>
+  <text x="968" y="152" text-anchor="end" font-family="'DejaVu Sans Mono', monospace" font-size="13" fill="#3f7a55">~90 submissions</text>
+  <line x1="56" y1="168" x2="968" y2="168" stroke="#1c5e36" stroke-width="1"/>
+
+  <!-- LEFT COLUMN -->
+  <text font-family="'DejaVu Sans Mono', monospace" font-size="14.5" fill="#79e6a4" xml:space="preserve">
+    <tspan x="58" y="200" fill="#57e6e6" font-weight="bold">▌ ideas.real</tspan>
+    <tspan x="62" dy="28">› woob-requests verzamelen &amp; publiceren</tspan>
+    <tspan x="62" dy="22">› samenwerken met basisbeveiliging</tspan>
+    <tspan x="62" dy="22">› audit the NL government</tspan>
+    <tspan x="62" dy="22">› a hacker 'wall of fame'</tspan>
+    <tspan x="62" dy="22">› whiskyleaks</tspan>
+    <tspan x="62" dy="22">› I2P should be used way more</tspan>
+    <tspan x="62" dy="22">› try it out with a big company</tspan>
+    <tspan x="62" dy="22">› stickers (uiteraard)</tspan>
+    <tspan x="62" dy="22">› lacebril</tspan>
+    <tspan x="62" dy="22">› just... more cyber</tspan>
+    <tspan x="62" dy="22">› mijn dochter wil hacker worden</tspan>
+    <tspan x="62" dy="22">› ik heb een (heel goed) idee</tspan>
+    <tspan x="58" dy="42" fill="#ff6ad5" font-weight="bold">▌ vibes.exe</tspan>
+    <tspan x="62" dy="28">› hack the planet</tspan>
+    <tspan x="62" dy="22">› the answer is 42</tspan>
+    <tspan x="62" dy="22" fill="#ffb3e6">› DIVD rocks (in comic sans)</tspan>
+    <tspan x="62" dy="22">› astridn for president</tspan>
+    <tspan x="62" dy="22">› charge your badge — fund DIVD.Charity</tspan>
+    <tspan x="62" dy="22">› spiegeltje, spiegeltje aan de wand…</tspan>
+  </text>
+
+  <!-- divider between columns -->
+  <line x1="512" y1="190" x2="512" y2="690" stroke="#143f24" stroke-width="1"/>
+
+  <!-- RIGHT COLUMN -->
+  <text font-family="'DejaVu Sans Mono', monospace" font-size="14.5" fill="#79e6a4" xml:space="preserve">
+    <tspan x="536" y="200" fill="#5ff09a" font-weight="bold">▌ commands_people_typed.log</tspan>
+    <tspan x="540" dy="28" fill="#9affc4">$ whoami</tspan><tspan dx="26">$ id</tspan>
+    <tspan x="540" dy="22" fill="#9affc4">$ ls -la</tspan><tspan dx="22">$ ls</tspan>
+    <tspan x="540" dy="22" fill="#9affc4">$ ifconfig</tspan><tspan dx="14">$ ps aux</tspan>
+    <tspan x="540" dy="22" fill="#9affc4">$ top</tspan><tspan dx="40">$ cat root.txt</tspan>
+    <tspan x="540" dy="22" fill="#9affc4">$ su -</tspan><tspan dx="38">$ reboot</tspan>
+    <tspan x="540" dy="22" fill="#9affc4">$ apt update &amp;&amp; apt upgrade</tspan>
+    <tspan x="540" dy="22" fill="#9affc4">$ history · clear · cls · cat</tspan>
+    <tspan x="540" dy="22" fill="#4f9c6c"># psst: it's an idea box, not a shell</tspan>
+    <tspan x="536" dy="42" fill="#ffcc66" font-weight="bold">▌ injection.warn</tspan>
+    <tspan x="540" dy="28" fill="#ffd98a">! &lt;marquee&gt;&lt;img src=//s42.re/…&gt;</tspan>
+    <tspan x="540" dy="22" fill="#ffd98a">! $(ls)</tspan><tspan dx="30">! `echo ls`</tspan>
+    <tspan x="540" dy="22" fill="#ffd98a">! \\\\|||\  (keysmash, contained)</tspan>
+    <tspan x="536" dy="42" fill="#57e6e6" font-weight="bold">▌ links.url</tspan>
+    <tspan x="540" dy="28" fill="#7fd9ff">↳ blog.mgdproductions.com</tspan>
+    <tspan x="540" dy="22" fill="#7fd9ff">↳ digitaledollemina.nl</tspan>
+    <tspan x="540" dy="22" fill="#7fd9ff">↳ wiccon.nl</tspan>
+  </text>
+
+  <!-- footer -->
+  <line x1="56" y1="864" x2="968" y2="864" stroke="#1c5e36" stroke-width="1"/>
+  <text x="512" y="896" text-anchor="middle" font-family="'DejaVu Sans Mono', monospace" font-size="14.5" fill="#ff6ad5">♪ several rickroll attempts detected — and politely declined ♪</text>
+  <text x="512" y="924" text-anchor="middle" font-family="'DejaVu Sans Mono', monospace" font-size="11.5" fill="#3f7a55" xml:space="preserve">noise dept // test · hi · hoi · bananas · squirrel · craziness · ':o' · ESCAPE · 'can I print?' · 'i am receipt'</text>
+  <text x="512" y="952" text-anchor="middle" font-family="'DejaVu Sans Mono', monospace" font-size="14.5" fill="#5ff09a">✓ end-to-end test from the kiosk HTTP endpoint — it works.</text>
+  <text x="968" y="980" text-anchor="end" font-family="'DejaVu Sans Mono', monospace" font-size="12" fill="#2f6a45">DIVD ♥ hack the planet</text>
+</svg>
