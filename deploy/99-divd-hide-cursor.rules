@@ -1,0 +1,10 @@
+# Hide the kiosk's mouse cursor.
+#
+# The HATOR keyboard exposes a phantom "Mouse" HID (event4, ID_INPUT_MOUSE=1).
+# With no real mouse and no touchscreen, that pointer just makes the cage
+# compositor park a cursor on screen permanently. cage ignores the XCursor
+# theme, so the only reliable fix is to give the seat no pointer at all: tell
+# libinput to ignore this one Mouse interface. The keyboard itself (typing) and
+# the volume keys (read straight from evdev by `manage.py volkeys`) are
+# unaffected — only libinput's view of the Mouse interface changes.
+SUBSYSTEM=="input", KERNEL=="event*", ATTRS{name}=="HATOR SKYFALL 65 Mouse", ENV{LIBINPUT_IGNORE_DEVICE}="1"

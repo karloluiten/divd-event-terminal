@@ -1,0 +1,15 @@
+#!/bin/sh
+# Reboot once into a plain terminal login on tty1 instead of the kiosk.
+#
+# Sets a one-shot flag and reboots. On the next boot, divd-kiosk.service is
+# skipped (ConditionPathExists=!~/.boot-to-shell) and getty@tty1 autologins divd
+# on the main screen instead. The flag is cleared on login (divd's ~/.profile),
+# so the *following* reboot returns to the kiosk automatically.
+#
+# Install: sudo install -m755 deploy/divd-shell /usr/local/bin/divd-shell
+set -e
+touch "$HOME/.boot-to-shell"
+echo "Flag set: next boot -> terminal login on tty1 (kiosk skipped once)."
+echo "It auto-clears on login, so the reboot after that returns to the kiosk."
+echo "Rebooting now..."
+exec sudo -n systemctl reboot

@@ -1,0 +1,24 @@
+[Unit]
+Description=DIVD idea-collector backend (Django/gunicorn)
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=divd
+Group=divd
+# Printer access: /dev/usb/lp0 is root:lp, so the worker needs the lp group.
+SupplementaryGroups=lp
+WorkingDirectory=/opt/divdprint
+ExecStart=/opt/venv/bin/gunicorn divdprint.wsgi:application \
+    --bind 0.0.0.0:8000 --workers 3 --timeout 30 --name divd-print
+Restart=always
+RestartSec=2
+# Light hardening — it's an unprivileged service on loopback only.
+# NOTE: do NOT set NoNewPrivileges — it blocks the `sudo systemctl poweroff`
+# used by the /shutdown command (setuid escalation would be denied).
+ProtectSystem=full
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

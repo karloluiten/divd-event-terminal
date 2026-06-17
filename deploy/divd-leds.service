@@ -1,0 +1,20 @@
+[Unit]
+Description=DIVD kiosk LED strip animation daemon (WS2812B on SPI0)
+After=network.target
+
+[Service]
+Type=simple
+User=divd
+Group=divd
+# Strip access: /dev/spidev0.0 is root:spi; lgpio needs gpio. divd is in both.
+SupplementaryGroups=spi gpio
+WorkingDirectory=/opt/divdprint
+ExecStart=/opt/venv/bin/python manage.py leds
+Restart=always
+RestartSec=3
+# Light hardening, matching divd-print.service.
+ProtectSystem=full
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

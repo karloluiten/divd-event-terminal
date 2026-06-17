@@ -1,0 +1,22 @@
+[Unit]
+Description=DIVD kiosk volume-key -> LED control reader
+After=network.target divd-leds.service
+Wants=divd-leds.service
+
+[Service]
+Type=simple
+User=divd
+Group=divd
+# Reads /dev/input/event* (the keyboard's volume + shift keys). divd is in the
+# input group; name it explicitly so the sandbox keeps it.
+SupplementaryGroups=input
+WorkingDirectory=/opt/divdprint
+ExecStart=/opt/venv/bin/python manage.py volkeys
+Restart=always
+RestartSec=3
+# Light hardening, matching divd-leds.service.
+ProtectSystem=full
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,4 @@
+# DIVD kiosk — installed to /etc/sudoers.d/divd-shutdown (mode 0440).
+# Lets the unprivileged kiosk backend power the Pi off / reboot it (and only
+# that) for the hidden, password-gated /shutdown and /reboot commands.
+divd ALL=(root) NOPASSWD: /usr/bin/systemctl poweroff, /usr/bin/systemctl reboot

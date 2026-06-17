@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.Python
+
+# Django
+db.sqlite3
+db.sqlite3-journal
+*.log
+
+# collectstatic output (regenerated from static/ + app static)
+staticfiles/
+
+# Runtime artifacts
+.lgd-nfy0
+*.pid
+
+# Local env / secrets
+.env
+.env.*
+!.env.example
+
+# Editor / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store

@@ -1,0 +1,45 @@
+[Unit]
+Description=DIVD kiosk (cage Wayland compositor + chromium)
+After=divd-print.service systemd-user-sessions.service
+Wants=divd-print.service
+# "Boot to a terminal once": if this flag exists, skip the kiosk this boot so
+# getty@tty1 gives a normal login. The flag is cleared on login (divd's
+# .bash_profile), so the next reboot returns to the kiosk. Set it with
+# `divd-shell` (deploy/divd-shell) then reboot.
+#
+# NB: do NOT add `Conflicts=getty@tty1.service` here. The kiosk and getty@tty1
+# are already mutually exclusive at runtime via their opposite flag conditions
+# (this unit needs the flag absent; getty@tty1's bootshell.conf drop-in needs it
+# present). A Conflicts= is resolved at transaction-build time, BEFORE conditions
+# are checked: on a flag boot systemd would cancel getty@tty1's queued start job
+# and only THEN skip the kiosk on its failed condition — leaving tty1 with no
+# owner at all (bare console, no shell). The conditions alone are the guard.
+ConditionPathExists=!/home/divd/.boot-to-shell
+
+[Service]
+User=divd
+# Real login session so logind grants this seat the GPU/input device ACLs
+# and sets up XDG_RUNTIME_DIR — required for cage/Wayland as an unprivileged user.
+PAMName=login
+TTYPath=/dev/tty1
+TTYReset=yes
+TTYVHangup=yes
+StandardInput=tty
+StandardOutput=journal
+StandardError=journal
+WorkingDirectory=/home/divd
+Environment=HOME=/home/divd
+Environment=XDG_RUNTIME_DIR=/run/user/1000
+# cage is a single-app Wayland kiosk compositor: no window manager, one client.
+# When chromium exits, cage exits and systemd restarts the whole thing.
+# -s allows Ctrl+Alt+F<n> VT switching (escape to the tty3 getty console).
+# Cursor: the keyboard exposes a phantom Mouse HID and there's no real mouse, so
+# cage parks a pointer on screen. We don't fight it with a theme (cage ignores
+# it); instead libinput is told to ignore that Mouse interface — see
+# deploy/99-divd-hide-cursor.rules — so the seat has no pointer and no cursor.
+ExecStart=/usr/bin/cage -s -- /opt/divdprint/deploy/chromium-wayland.sh
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

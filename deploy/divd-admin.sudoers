@@ -1,0 +1,6 @@
+# DIVD kiosk — installed to /etc/sudoers.d/divd-admin (mode 0440).
+# Lets the unprivileged kiosk backend run the few nmcli verbs the /admin wifi
+# console needs (scan + connect). No other commands are granted.
+divd ALL=(root) NOPASSWD: /usr/bin/nmcli device wifi rescan
+divd ALL=(root) NOPASSWD: /usr/bin/nmcli -t -f IN-USE\,SSID\,SIGNAL\,SECURITY device wifi list
+divd ALL=(root) NOPASSWD: /usr/bin/nmcli device wifi connect *
