@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DIVD Event Terminal — How it works</title>
+
+  <!-- reveal.js (vendored locally in ./vendor so the deck works fully offline) -->
+  <link rel="stylesheet" href="vendor/reveal.css">
+  <link rel="stylesheet" href="vendor/theme-black.css" id="theme">
+  <link rel="stylesheet" href="vendor/monokai.css">
+
+  <style>
+    :root {
+      --divd-yellow: #ffb000;
+      --hacker-green: #3cff5a;
+      --attack-red: #ff3c3c;
+      --bg: #0a0a0a;
+    }
+    .reveal { font-family: "JetBrains Mono", "DejaVu Sans Mono", Menlo, monospace; font-size: 30px; }
+    .reveal .slides section { text-align: left; }
+    .reveal h1, .reveal h2, .reveal h3 { color: var(--divd-yellow); text-transform: none; letter-spacing: 0; font-family: inherit; }
+    .reveal h1 { font-size: 1.9em; text-shadow: 0 0 18px rgba(255,176,0,.35); }
+    .reveal h2 { font-size: 1.4em; }
+    .reveal section { color: #e6e6e6; }
+    .reveal strong { color: var(--hacker-green); }
+    .reveal em { color: var(--divd-yellow); font-style: normal; }
+    .reveal a { color: var(--divd-yellow); }
+    .reveal code { font-family: inherit; }
+    .reveal :not(pre) > code { color: var(--hacker-green); background: rgba(60,255,90,.08); padding: 1px 6px; border-radius: 4px; }
+    .reveal table { font-size: .72em; }
+    .reveal table th { color: var(--divd-yellow); border-bottom: 1px solid #444; }
+    .reveal table td { border-bottom: 1px solid #222; }
+    .reveal ul { line-height: 1.5; }
+    .reveal .prompt { color: var(--hacker-green); }
+    .reveal .prompt::before { content: "$ "; color: var(--divd-yellow); }
+    .reveal .muted { color: #888; font-size: .8em; }
+    .reveal .center { text-align: center; }
+    .reveal .pill { display:inline-block; border:1px solid var(--divd-yellow); color:var(--divd-yellow); border-radius: 999px; padding: 2px 14px; font-size:.6em; margin: 4px 4px 0 0; }
+    .reveal .pill.green { border-color: var(--hacker-green); color: var(--hacker-green); }
+    .reveal .pill.red { border-color: var(--attack-red); color: var(--attack-red); }
+    .cols { display: flex; gap: 40px; align-items: flex-start; }
+    .cols > div { flex: 1; }
+    .reveal blockquote { background: rgba(255,176,0,.06); border-left: 3px solid var(--divd-yellow); width: 100%; font-style: normal; box-shadow: none; }
+    .reveal .slides section .fragment.highlight-current-green.current-fragment { color: var(--hacker-green); }
+    .arch { font-size: .58em; line-height: 1.35; color:#cfcfcf; }
+    .arch .box { border:1px solid #555; border-radius:6px; padding:6px 10px; display:inline-block; margin:3px; }
+    .arch .y { border-color: var(--divd-yellow); color: var(--divd-yellow); }
+    .arch .g { border-color: var(--hacker-green); color: var(--hacker-green); }
+    .footer-brand { position: fixed; bottom: 8px; right: 16px; font-size: 12px; color:#555; letter-spacing: 2px; z-index: 5; }
+    .reveal section img.bezel { border: 8px solid #1a1a1a; border-radius: 8px; box-shadow: 0 0 40px rgba(0,0,0,.6); background:#000; }
+  </style>
+</head>
+<body>
+  <div class="footer-brand">DIVD · divd.nl</div>
+  <div class="reveal">
+    <div class="slides">
+
+      <!-- ===== TITLE ===== -->
+      <section data-background-color="#0a0a0a">
+        <h1>DIVD Event Terminal</h1>
+        <p style="font-size:1.1em; color:#e6e6e6;">
+          A Raspberry&nbsp;Pi&nbsp;5 kiosk that <strong>prints your ideas</strong>
+          on a thermal receipt — wrapped in a deliberately over-the-top
+          <em>hacker-terminal</em> look.
+        </p>
+        <p class="muted">How it works · the hardware · the components<br>
+          Built for DIVD event booths · <em>"Het internet is van iedereen. De verdediging ook."</em></p>
+        <p class="muted">↓ / Space to advance · Esc for slide overview</p>
+      </section>
+
+      <!-- ===== THE PITCH ===== -->
+      <section>
+        <h2>What is this thing?</h2>
+        <p>A booth attraction with a job:</p>
+        <ul>
+          <li>A visitor walks up, <strong>types an idea</strong>, hits Enter.</li>
+          <li>It <strong>prints on a real receipt printer</strong> — DIVD logo, the idea, an <code>IDEA No. NNNN</code> counter.</li>
+          <li>The screen looks like a movie hacker's terminal: tmux panes, a fake <code>htop</code>, a glitching DIVD logo.</li>
+          <li>Loads of <strong>easter eggs</strong> reward people who poke at it.</li>
+        </ul>
+        <p class="center"><span class="pill">conversation starter</span><span class="pill">takeaway souvenir</span><span class="pill green">DIVD / Lacewing pitch</span></p>
+      </section>
+
+      <!-- ===== THE LOOP ===== -->
+      <section>
+        <h2>The core loop</h2>
+        <div class="arch center">
+          <span class="box">Visitor types idea</span> →
+          <span class="box y">Browser (kiosk)</span> →
+          <span class="box y">Django <code>/submit</code></span> →
+          <span class="box">Save to database</span> →
+          <span class="box g">Render receipt (Pillow)</span> →
+          <span class="box g">Thermal printer</span> →
+          <span class="box">paper cut ✂</span>
+        </div>
+        <p style="margin-top:30px">Every print also fires a tiny message to the <strong>LED strip</strong> so the lights flash green. Every <em>4th</em> receipt prints bonus ASCII art or a dithered cat photo.</p>
+      </section>
+
+      <!-- ===== HARDWARE OVERVIEW ===== -->
+      <section>
+        <h2>The hardware — four parts</h2>
+        <table>
+          <thead><tr><th>Part</th><th>What it is</th><th>Its job</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Raspberry Pi 5</strong></td><td>tiny computer, brain of the box</td><td>runs everything</td></tr>
+            <tr><td><strong>Screen</strong></td><td>HDMI display</td><td>shows the kiosk UI full-screen</td></tr>
+            <tr><td><strong>Epson TM-T20III</strong></td><td>thermal receipt printer (USB)</td><td>prints the ideas</td></tr>
+            <tr><td><strong>WS2812B LED strip</strong></td><td>15 addressable LEDs, 50&nbsp;cm</td><td>ambient "Knight Rider" glow + event flashes</td></tr>
+          </tbody>
+        </table>
+        <p class="muted">Plus a keyboard for visitors to type on — its <em>volume keys</em> double as the only physical control for the lights.</p>
+      </section>
+
+      <!-- ===== PI 5 ===== -->
+      <section>
+        <h2><span class="pill">1</span> Raspberry Pi 5 — the brain</h2>
+        <div class="cols">
+          <div>
+            <ul>
+              <li>Credit-card-sized Linux computer (Raspberry Pi OS, 64-bit).</li>
+              <li>Runs the whole stack: web server, database, display, printer, LEDs.</li>
+              <li>Boots <em>straight into the kiosk</em> — no desktop, no mouse, no login screen.</li>
+              <li>Everything lives at <code>/opt/divdprint</code> and runs as the unprivileged <code>divd</code> user.</li>
+            </ul>
+          </div>
+          <div>
+            <p class="muted">On boot it:</p>
+            <ul class="muted">
+              <li>starts the Django app (<code>gunicorn</code> on port 8000)</li>
+              <li>launches a full-screen browser pointed at it</li>
+              <li>prints a <code>hello, world!</code> receipt to prove the printer is alive</li>
+              <li>starts the LED scanner</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== SCREEN / DISPLAY ===== -->
+      <section>
+        <h2><span class="pill">2</span> The screen — kiosk display</h2>
+        <ul>
+          <li>A plain HDMI monitor — but locked down so it <em>only</em> ever shows our page.</li>
+          <li>The Pi runs <strong>cage</strong> (a minimal Wayland kiosk compositor) which launches <strong>Chromium</strong> full-screen at <code>localhost:8000</code>.</li>
+          <li>No window borders, no address bar, no cursor — it looks like a bespoke appliance, not a web page.</li>
+        </ul>
+        <blockquote>
+          <strong>Escape defenses:</strong> Alt-Tab, Alt-F4, F11 and Ctrl-Alt-F-keys are all blocked — try to break out and the screen flashes a cheeky red warning. The kiosk is meant to survive curious hands at a public booth.
+        </blockquote>
+      </section>
+
+      <!-- ===== WHAT'S ON SCREEN ===== -->
+      <section>
+        <h2>What's on the screen</h2>
+        <p>A fake "movie hacker" desktop made of four tmux-style panes:</p>
+        <ul>
+          <li><strong>Left — terminal:</strong> where visitors type their idea, plus a slash-command menu of print styles.</li>
+          <li><strong>Top-right — fake <code>htop</code>:</strong> red "attacker" processes vs. green <em>Lacewing</em> "defender" processes, live counters.</li>
+          <li><strong>Bottom-right — glitching DIVD logo</strong> with random takeover animations.</li>
+          <li><strong>Status bar:</strong> live <code>ideas:N</code> counter + clock.</li>
+        </ul>
+        <p class="muted">All decorative — the real work is one text box and an Enter key.</p>
+      </section>
+
+      <!-- ===== PRINTER ===== -->
+      <section>
+        <h2><span class="pill">3</span> The printer — Epson TM-T20III</h2>
+        <div class="cols">
+          <div>
+            <ul>
+              <li>A <strong>thermal receipt printer</strong> — same kind shops use. No ink; heat darkens special paper.</li>
+              <li>Connects over USB; the Pi sees it as <code>/dev/usb/lp0</code>.</li>
+              <li>We don't send text — we draw the <em>whole receipt as an image</em> with <strong>Pillow</strong>, then send raw ESC/POS commands to print and auto-cut it.</li>
+            </ul>
+          </div>
+          <div>
+            <p class="muted">Every receipt has:</p>
+            <ul class="muted">
+              <li>a DIVD logo header (drawn pixel-by-pixel)</li>
+              <li>the visitor's idea</li>
+              <li><code>IDEA No. NNNN</code> counter + <code>divd.nl</code></li>
+            </ul>
+            <p class="muted">No date/time — the booth is offline by design.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== PRINT MODES ===== -->
+      <section>
+        <h2>18 easter-egg print styles</h2>
+        <p>Type a <code>/slash</code> command before your idea to change how it prints:</p>
+        <div class="cols">
+          <div>
+            <ul style="font-size:.85em">
+              <li><code>/comicsans</code> · <code>/big</code> · <code>/tiny</code></li>
+              <li><code>/shout</code> · <code>/leet</code> · <code>/mirror</code></li>
+              <li><code>/upsidedown</code> · <code>/redacted</code></li>
+              <li><code>/wanted</code> — old-west poster</li>
+            </ul>
+          </div>
+          <div>
+            <ul style="font-size:.85em">
+              <li><code>/qr</code> · <code>/barcode</code> — scannable</li>
+              <li><code>/glitch</code> · <code>/spooky</code> · <code>/retro</code></li>
+              <li><code>/fancy</code> · <code>/wingdings</code> · <code>/ascii</code></li>
+              <li><code>/lacewing</code> — the DIVD manifesto</li>
+            </ul>
+          </div>
+        </div>
+        <p class="muted">Whatever the style, the idea is always saved to the database.</p>
+      </section>
+
+      <!-- ===== LED STRIP ===== -->
+      <section>
+        <h2><span class="pill">4</span> The LED strip — WS2812B</h2>
+        <div class="cols">
+          <div>
+            <ul>
+              <li>15 individually-addressable RGB LEDs (~50&nbsp;cm), wired to the Pi's SPI pin (pin 19).</li>
+              <li>Idles as a <strong>Knight-Rider scanner</strong> — a DIVD-yellow blob sweeping back and forth.</li>
+              <li>Reacts to events: a print flashes it <strong>green</strong>, an image-egg cycles a <em>rainbow</em>, the "ransomware" prank goes red, etc.</li>
+            </ul>
+          </div>
+          <div>
+            <p class="muted">Physical control = the keyboard's media keys:</p>
+            <ul class="muted">
+              <li>Vol +/− → scanner faster / slower</li>
+              <li>Shift+Vol → brighter / dimmer</li>
+              <li>Mute → pause</li>
+            </ul>
+            <p class="muted">Settings persist across reboots.</p>
+          </div>
+        </div>
+        <p class="muted">The lights are <em>fail-soft</em> — if anything goes wrong with them, printing is never affected.</p>
+      </section>
+
+      <!-- ===== ARCHITECTURE ===== -->
+      <section>
+        <h2>How the pieces talk</h2>
+        <div class="arch center" style="margin-top:10px">
+          <div><span class="box y">Chromium kiosk (browser)</span></div>
+          <div class="muted">↕ HTTP</div>
+          <div><span class="box y">Django + gunicorn · port 8000</span></div>
+          <div class="muted">┌──────────────┼──────────────┐</div>
+          <div>
+            <span class="box">SQLite DB<br><span class="muted">stores every idea</span></span>
+            <span class="box g">Printer<br><span class="muted">/dev/usb/lp0</span></span>
+            <span class="box g">LED daemon<br><span class="muted">via UDP message</span></span>
+          </div>
+        </div>
+        <p class="muted center" style="margin-top:24px">The LED strip is owned by <em>one</em> dedicated process; the web app just sends it a quick "play this effect" note and moves on — so the lights can never slow down a print.</p>
+      </section>
+
+      <!-- ===== SOFTWARE STACK ===== -->
+      <section>
+        <h2>Under the hood</h2>
+        <table>
+          <thead><tr><th>Layer</th><th>Tech</th></tr></thead>
+          <tbody>
+            <tr><td>Web app</td><td><strong>Django 6</strong> + gunicorn (Python 3.13)</td></tr>
+            <tr><td>Database</td><td>SQLite — every idea, the mode used, errors</td></tr>
+            <tr><td>Receipt rendering</td><td>Pillow (images) + qrcode / Code128</td></tr>
+            <tr><td>Display</td><td>cage (Wayland) + Chromium kiosk</td></tr>
+            <tr><td>LEDs</td><td>Adafruit Blinka + rpi_ws281x</td></tr>
+            <tr><td>Glue</td><td>systemd services, runs on cold boot</td></tr>
+          </tbody>
+        </table>
+        <p class="muted">Each piece is its own <code>systemd</code> service: web, display, LEDs, volume-keys, boot-receipt — so any one can restart without taking down the rest.</p>
+      </section>
+
+      <!-- ===== LACEWING ===== -->
+      <section>
+        <h2>The message inside</h2>
+        <blockquote>
+          <em>"The internet belongs to everyone. So does its defense."</em><br>
+          <span class="muted">"Het internet is van iedereen. De verdediging ook."</span>
+        </blockquote>
+        <p>The whole hacker-terminal gag is a vehicle for DIVD's <strong>Project Lacewing</strong> pitch — an open, European, community answer to closed Big-Tech security AI. The fake <code>htop</code>, the <code>/lacewing</code> receipt and the logo takeover all carry the track record: <strong>189 volunteers · 193 cases · 1.4M IPs notified</strong>.</p>
+        <p class="center"><span class="pill red">attackers</span> &nbsp;vs&nbsp; <span class="pill green">defenders (us)</span></p>
+      </section>
+
+      <!-- ===== CLOSE ===== -->
+      <section data-background-color="#0a0a0a">
+        <h1>That's the box.</h1>
+        <p class="prompt">type an idea · hit enter · take the receipt</p>
+        <p style="margin-top:30px">
+          <strong>Pi 5</strong> brain · <strong>screen</strong> shows the hacker UI ·
+          <strong>printer</strong> hands out souvenirs · <strong>LEDs</strong> set the mood.
+        </p>
+        <p class="muted">Questions? Everything is at <code>/opt/divdprint</code> — see <code>README.md</code>, <code>STATUS.md</code> and <code>INSTALL.md</code>.</p>
+        <p class="center muted">divd.nl · lacewing.nl</p>
+      </section>
+
+    </div>
+  </div>
+
+  <script src="vendor/reveal.js"></script>
+  <script src="vendor/highlight.js"></script>
+  <script src="vendor/notes.js"></script>
+  <script>
+    Reveal.initialize({
+      hash: true,
+      slideNumber: 'c/t',
+      transition: 'fade',
+      backgroundTransition: 'fade',
+      controls: true,
+      progress: true,
+      plugins: [ RevealHighlight, RevealNotes ],
+    });
+  </script>
+</body>
+</html>
