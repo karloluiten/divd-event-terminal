@@ -61,7 +61,11 @@
     <div class="slides">
 
       <!-- TITLE -->
-      <section data-background-color="#0a0a0a">
+      <section data-background-color="#0a0a0a"
+               data-background-image="img/booth-front.jpg"
+               data-background-size="cover"
+               data-background-position="center"
+               data-background-opacity="0.35">
         <img src="../static/divdlogo.svg" alt="DIVD" class="divd-logo">
         <h1>DIVD Event Terminal</h1>
         <p class="big">type an idea&nbsp; → &nbsp;<strong>get a receipt</strong></p>
@@ -213,6 +217,20 @@
             printer shows up as dev-usb-lp0. The LED strip's data line is on physical
             pin 19, GPIO 10, which is the SPI bus, with 5 volts and ground from the
             header. One data wire, no extra driver chip.
+          </aside>
+        </section>
+
+        <!-- INSIDE THE BOX (back) -->
+        <section>
+          <h2>Inside the box</h2>
+          <img src="img/hardware-back.jpg"
+               alt="Back of the kiosk with the lid off: Epson thermal printer, Raspberry Pi 5 and its cabling, all in one hinged case"
+               style="max-height:58vh; width:auto; border:1px solid #333; border-radius:6px; box-shadow:0 0 30px rgba(0,0,0,.6);">
+          <p class="sub">Epson printer · <span style="color:var(--hacker-green)">Raspberry Pi 5</span> + cabling · one hinged case</p>
+          <aside class="notes">
+            And here's the back, with the lid off — the actual guts. The big black box
+            is the Epson thermal printer. Down in the corner is the Raspberry Pi 5 with
+            its nest of cables, and the whole thing is bolted into a single hinged case.
           </aside>
         </section>
 
