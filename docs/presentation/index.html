@@ -40,6 +40,12 @@
     .flow .a { color: var(--divd-yellow); font-weight:700; }
     .flow .g { color: var(--hacker-green); font-weight:700; }
     .flow .arrow { color:#555; }
+    .pins { margin: 0 auto; border-collapse: collapse; font-size: .82em; }
+    .pins th, .pins td { padding: 8px 18px; border-bottom: 1px solid #222; text-align: left; }
+    .pins th { color: var(--divd-yellow); border-bottom: 1px solid #444; }
+    .pins .pin { color: var(--hacker-green); font-weight: 700; white-space: nowrap; }
+    .dropped { color: var(--attack-red); }
+    .strike { text-decoration: line-through; color:#888; }
     .tags span { display:inline-block; border:1px solid var(--divd-yellow); color:var(--divd-yellow); border-radius:999px; padding:4px 16px; margin:6px; font-size:.85em; }
     .tags .green { border-color: var(--hacker-green); color: var(--hacker-green); }
     .tags .red   { border-color: var(--attack-red); color: var(--attack-red); }
@@ -126,6 +132,31 @@
         <p class="muted">volume keys = speed &amp; brightness · never breaks a print</p>
       </section>
 
+      <!-- CONNECTIONS / PINS -->
+      <section>
+        <h2>How it all plugs in</h2>
+        <table class="pins">
+          <thead><tr><th>Part</th><th>Connection</th><th>On the Pi</th></tr></thead>
+          <tbody>
+            <tr><td>Screen</td><td>HDMI</td><td class="pin">HDMI0</td></tr>
+            <tr><td>Keyboard</td><td>USB</td><td class="pin">USB</td></tr>
+            <tr><td>Printer</td><td>USB</td><td class="pin">/dev/usb/lp0</td></tr>
+            <tr><td>LED strip <code>DIN</code></td><td>SPI0 MOSI</td><td class="pin">pin 19 · GPIO 10</td></tr>
+            <tr><td>LED power</td><td>+5V / GND</td><td class="pin">pin 2 / pin 6</td></tr>
+          </tbody>
+        </table>
+        <p class="sub">LEDs ride the SPI bus — one wire of data, no extra driver chip</p>
+      </section>
+
+      <!-- TOF (DROPPED) -->
+      <section data-background-color="#0a0a0a">
+        <p class="kw"><span class="strike">ToF sensor</span></p>
+        <p class="sub">VL53L0X time-of-flight · on I²C (<span class="pin">SDA pin 3 · SCL pin 5</span>)</p>
+        <p class="lead">the plan: <em>wave your hand</em> to drive the lights</p>
+        <p class="lead dropped">✗ dropped — flaky &amp; fiddly</p>
+        <p class="lead">→ replaced by the keyboard's <strong>volume keys</strong></p>
+      </section>
+
       <!-- STACK -->
       <section>
         <h2>Under the hood</h2>
@@ -148,6 +179,9 @@
       <!-- CLOSE -->
       <section data-background-color="#0a0a0a">
         <p class="kw green">type · enter · take it.</p>
+        <p class="lead" style="margin-top:.6em">try it live →
+          <a href="https://karloluiten.github.io/divd-event-terminal/">karloluiten.github.io/divd-event-terminal</a>
+        </p>
         <p class="sub">divd.nl · lacewing.nl</p>
       </section>
 
