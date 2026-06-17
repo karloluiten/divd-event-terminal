@@ -52,6 +52,7 @@
     .footer-brand { position: fixed; bottom: 8px; right: 16px; font-size: 12px; color:#555; letter-spacing: 2px; z-index: 5; }
     .lead { color:#bbb; font-size: 1.05em; }
     .downhint { color:#555; font-size:.7em; margin-top: 1em; }
+    .divd-logo { width: 260px; height: auto; margin: 0 auto .4em; display: block; filter: drop-shadow(0 0 26px rgba(255,176,0,.4)); }
   </style>
 </head>
 <body>
@@ -61,6 +62,7 @@
 
       <!-- TITLE -->
       <section data-background-color="#0a0a0a">
+        <img src="../static/divdlogo.svg" alt="DIVD" class="divd-logo">
         <h1>DIVD Event Terminal</h1>
         <p class="big">type an idea&nbsp; → &nbsp;<strong>get a receipt</strong></p>
         <p class="sub">a hacker-terminal kiosk on a Raspberry Pi 5</p>
@@ -311,8 +313,8 @@
     Reveal.initialize({
       hash: true,
       slideNumber: 'c/t',
-      transition: 'fade',
-      backgroundTransition: 'fade',
+      transition: 'slide',          // directional: left/right horizontally, up/down through the hardware stack
+      backgroundTransition: 'slide',
       controls: true,
       progress: true,
       plugins: [ RevealHighlight, RevealNotes ],
