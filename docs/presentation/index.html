@@ -51,6 +51,7 @@
     .tags .red   { border-color: var(--attack-red); color: var(--attack-red); }
     .footer-brand { position: fixed; bottom: 8px; right: 16px; font-size: 12px; color:#555; letter-spacing: 2px; z-index: 5; }
     .lead { color:#bbb; font-size: 1.05em; }
+    .downhint { color:#555; font-size:.7em; margin-top: 1em; }
   </style>
 </head>
 <body>
@@ -63,12 +64,23 @@
         <h1>DIVD Event Terminal</h1>
         <p class="big">type an idea&nbsp; → &nbsp;<strong>get a receipt</strong></p>
         <p class="sub">a hacker-terminal kiosk on a Raspberry Pi 5</p>
+        <aside class="notes">
+          Welcome. This is the DIVD Event Terminal. In one sentence: you type an idea
+          and it prints you a receipt. It's a booth gadget dressed up as a movie
+          hacker's terminal, all running on a single Raspberry Pi 5. I'll show you
+          what it does, then walk through the hardware.
+        </aside>
       </section>
 
       <!-- ONE LINE -->
       <section>
         <p class="kw">It prints<br>your <span style="color:var(--hacker-green)">ideas.</span></p>
         <p class="sub">Type at the booth. Hit Enter. Walk away with paper.</p>
+        <aside class="notes">
+          The whole point in one line: it prints people's ideas. A visitor types
+          something at the booth, hits Enter, and walks away holding a printed
+          receipt with the DIVD logo on it — a little souvenir.
+        </aside>
       </section>
 
       <!-- THE FLOW -->
@@ -83,78 +95,165 @@
           <span class="g">✂ cut</span>
         </p>
         <p class="sub">every <em>4th</em> receipt → bonus ASCII art or a cat photo</p>
+        <aside class="notes">
+          Here's the path every idea takes. You type in the browser; it posts to our
+          Django app on the Pi; we save it to a database so we keep every idea; then
+          we render a receipt and send it to the printer, which prints and auto-cuts.
+          A fun touch: every fourth receipt also spits out bonus ASCII art or a
+          dithered cat photo.
+        </aside>
       </section>
 
-      <!-- HARDWARE DIVIDER -->
+      <!-- ===== HARDWARE: vertical stack under "4 parts" ===== -->
+      <section>
+
+        <!-- stack top: divider -->
+        <section data-background-color="#0a0a0a">
+          <p class="kw">4 parts.</p>
+          <p class="sub">brain · screen · printer · lights</p>
+          <p class="downhint">↓ press down to walk the hardware</p>
+          <aside class="notes">
+            The hardware is just four parts: the brain, the screen, the printer, and
+            the lights — plus a keyboard. Let's take them one at a time. I'll page
+            downward through each.
+          </aside>
+        </section>
+
+        <!-- PI 5 -->
+        <section>
+          <p class="num">1</p><p class="kw">Raspberry Pi 5</p>
+          <p class="sub">the brain</p>
+          <p class="lead">tiny Linux computer · <strong>runs everything</strong> · boots straight into the kiosk</p>
+          <p class="muted">no desktop · no login · no mouse</p>
+          <aside class="notes">
+            The brain is a Raspberry Pi 5 — a credit-card-sized Linux computer. It runs
+            everything: the web app, the database, the display, the printer, the lights.
+            It boots straight into the kiosk — no desktop, no login screen, no mouse.
+            Power it on and it's ready.
+          </aside>
+        </section>
+
+        <!-- SCREEN -->
+        <section>
+          <p class="num">2</p><p class="kw">Screen</p>
+          <p class="sub">the hacker UI</p>
+          <p class="lead">full-screen <strong>Chromium</strong> · fake tmux + <code>htop</code> · glitching DIVD logo</p>
+          <p class="tags"><span class="red">attackers</span><span class="green">defenders</span></p>
+          <p class="muted">locked down — Alt-Tab / F11 / escape all blocked</p>
+          <aside class="notes">
+            Just a regular HDMI monitor, but locked down. The Pi runs Chromium
+            full-screen so it only ever shows our page: fake tmux panes, a fake htop
+            with red attackers versus green defenders, and a glitching DIVD logo.
+            Escape keys like Alt-Tab and F11 are blocked, so curious hands can't break
+            out at a public booth.
+          </aside>
+        </section>
+
+        <!-- PRINTER -->
+        <section>
+          <p class="num">3</p><p class="kw green">Printer</p>
+          <p class="sub">Epson TM-T20III · thermal · USB</p>
+          <p class="lead">no ink · the whole receipt is <strong>drawn as an image</strong></p>
+          <p class="lead">DIVD logo · your idea · <code>IDEA No. NNNN</code></p>
+          <aside class="notes">
+            An Epson TM-T20III — the same thermal receipt printer shops use. No ink; it
+            burns the image onto heat-sensitive paper. It connects over USB. We don't
+            send it text — we draw the whole receipt as an image: DIVD logo, the idea,
+            and an "Idea number" counter.
+          </aside>
+        </section>
+
+        <!-- PRINT MODES -->
+        <section>
+          <p class="kw">18 styles</p>
+          <p class="lead"><code>/big</code> <code>/tiny</code> <code>/comicsans</code> <code>/qr</code> <code>/barcode</code></p>
+          <p class="lead"><code>/glitch</code> <code>/wanted</code> <code>/leet</code> <code>/mirror</code> <code>/lacewing</code></p>
+          <p class="sub">type a slash-command before your idea</p>
+          <aside class="notes">
+            There are eighteen print styles hidden behind slash-commands. Type
+            slash-big, slash-tiny, slash-comicsans, slash-qr, slash-glitch and so on
+            before your idea and it changes how it prints. Slash-lacewing prints the
+            DIVD manifesto. It rewards people who poke at it.
+          </aside>
+        </section>
+
+        <!-- LEDS -->
+        <section>
+          <p class="num">4</p><p class="kw">LED strip</p>
+          <p class="sub">15× WS2812B · Knight-Rider sweep</p>
+          <p class="lead">print → <strong>green flash</strong> · image → <em>rainbow</em></p>
+          <p class="muted">volume keys = speed &amp; brightness · never breaks a print</p>
+          <aside class="notes">
+            The lights are a strip of fifteen addressable LEDs. At rest they do a
+            Knight-Rider sweep in DIVD yellow. Events change the colour — a print
+            flashes green, an image egg cycles a rainbow. The keyboard's volume keys
+            control speed and brightness. It's deliberately fail-soft: if the lights
+            break, printing still works.
+          </aside>
+        </section>
+
+        <!-- CONNECTIONS / PINS -->
+        <section>
+          <h2>How it all plugs in</h2>
+          <table class="pins">
+            <thead><tr><th>Part</th><th>Connection</th><th>On the Pi</th></tr></thead>
+            <tbody>
+              <tr><td>Screen</td><td>HDMI</td><td class="pin">HDMI0</td></tr>
+              <tr><td>Keyboard</td><td>USB</td><td class="pin">USB</td></tr>
+              <tr><td>Printer</td><td>USB</td><td class="pin">/dev/usb/lp0</td></tr>
+              <tr><td>LED strip <code>DIN</code></td><td>SPI0 MOSI</td><td class="pin">pin 19 · GPIO 10</td></tr>
+              <tr><td>LED power</td><td>+5V / GND</td><td class="pin">pin 2 / pin 6</td></tr>
+            </tbody>
+          </table>
+          <p class="sub">LEDs ride the SPI bus — one wire of data, no extra driver chip</p>
+          <aside class="notes">
+            Quick wiring overview. Screen is HDMI. Keyboard and printer are USB — the
+            printer shows up as dev-usb-lp0. The LED strip's data line is on physical
+            pin 19, GPIO 10, which is the SPI bus, with 5 volts and ground from the
+            header. One data wire, no extra driver chip.
+          </aside>
+        </section>
+
+        <!-- TOF (DROPPED) -->
+        <section data-background-color="#0a0a0a">
+          <p class="kw"><span class="strike">ToF sensor</span></p>
+          <p class="sub">VL53L0X time-of-flight · on I²C (<span class="pin">SDA pin 3 · SCL pin 5</span>)</p>
+          <p class="lead">the plan: <em>wave your hand</em> to drive the lights</p>
+          <p class="lead dropped">✗ dropped — flaky &amp; fiddly</p>
+          <p class="lead">→ replaced by the keyboard's <strong>volume keys</strong></p>
+          <aside class="notes">
+            Originally we wanted a hand-wave control: a VL53L0X time-of-flight distance
+            sensor on the I2C pins, so you'd wave your hand to drive the lights. It
+            turned out flaky and fiddly to mount, so we dropped it and used the
+            keyboard's volume keys instead — simpler and rock-solid.
+          </aside>
+        </section>
+
+      </section>
+      <!-- ===== end hardware stack ===== -->
+
+      <!-- ESCAPE / DEFENSES -->
       <section data-background-color="#0a0a0a">
-        <p class="kw">4 parts.</p>
-        <p class="sub">brain · screen · printer · lights</p>
-      </section>
-
-      <!-- PI 5 -->
-      <section>
-        <p class="num">1</p><p class="kw">Raspberry Pi 5</p>
-        <p class="sub">the brain</p>
-        <p class="lead">tiny Linux computer · <strong>runs everything</strong> · boots straight into the kiosk</p>
-        <p class="muted">no desktop · no login · no mouse</p>
-      </section>
-
-      <!-- SCREEN -->
-      <section>
-        <p class="num">2</p><p class="kw">Screen</p>
-        <p class="sub">the hacker UI</p>
-        <p class="lead">full-screen <strong>Chromium</strong> · fake tmux + <code>htop</code> · glitching DIVD logo</p>
-        <p class="tags"><span class="red">attackers</span><span class="green">defenders</span></p>
-        <p class="muted">locked down — Alt-Tab / F11 / escape all blocked</p>
-      </section>
-
-      <!-- PRINTER -->
-      <section>
-        <p class="num">3</p><p class="kw green">Printer</p>
-        <p class="sub">Epson TM-T20III · thermal · USB</p>
-        <p class="lead">no ink · the whole receipt is <strong>drawn as an image</strong></p>
-        <p class="lead">DIVD logo · your idea · <code>IDEA No. NNNN</code></p>
-      </section>
-
-      <!-- PRINT MODES -->
-      <section>
-        <p class="kw">18 styles</p>
-        <p class="lead"><code>/big</code> <code>/tiny</code> <code>/comicsans</code> <code>/qr</code> <code>/barcode</code></p>
-        <p class="lead"><code>/glitch</code> <code>/wanted</code> <code>/leet</code> <code>/mirror</code> <code>/lacewing</code></p>
-        <p class="sub">type a slash-command before your idea</p>
-      </section>
-
-      <!-- LEDS -->
-      <section>
-        <p class="num">4</p><p class="kw">LED strip</p>
-        <p class="sub">15× WS2812B · Knight-Rider sweep</p>
-        <p class="lead">print → <strong>green flash</strong> · image → <em>rainbow</em></p>
-        <p class="muted">volume keys = speed &amp; brightness · never breaks a print</p>
-      </section>
-
-      <!-- CONNECTIONS / PINS -->
-      <section>
-        <h2>How it all plugs in</h2>
-        <table class="pins">
-          <thead><tr><th>Part</th><th>Connection</th><th>On the Pi</th></tr></thead>
-          <tbody>
-            <tr><td>Screen</td><td>HDMI</td><td class="pin">HDMI0</td></tr>
-            <tr><td>Keyboard</td><td>USB</td><td class="pin">USB</td></tr>
-            <tr><td>Printer</td><td>USB</td><td class="pin">/dev/usb/lp0</td></tr>
-            <tr><td>LED strip <code>DIN</code></td><td>SPI0 MOSI</td><td class="pin">pin 19 · GPIO 10</td></tr>
-            <tr><td>LED power</td><td>+5V / GND</td><td class="pin">pin 2 / pin 6</td></tr>
-          </tbody>
-        </table>
-        <p class="sub">LEDs ride the SPI bus — one wire of data, no extra driver chip</p>
-      </section>
-
-      <!-- TOF (DROPPED) -->
-      <section data-background-color="#0a0a0a">
-        <p class="kw"><span class="strike">ToF sensor</span></p>
-        <p class="sub">VL53L0X time-of-flight · on I²C (<span class="pin">SDA pin 3 · SCL pin 5</span>)</p>
-        <p class="lead">the plan: <em>wave your hand</em> to drive the lights</p>
-        <p class="lead dropped">✗ dropped — flaky &amp; fiddly</p>
-        <p class="lead">→ replaced by the keyboard's <strong>volume keys</strong></p>
+        <p class="kw">Don't <span class="dropped">break out.</span></p>
+        <p class="sub">it's a public booth — people <em>will</em> poke at it</p>
+        <p class="tags">
+          <span class="red">Alt-Tab</span><span class="red">Alt-F4</span><span class="red">F11</span>
+          <span class="red">right-click</span><span class="red">Ctrl-Alt-F‹n›</span>
+        </p>
+        <p class="lead">all blocked → screen flashes <span class="dropped">red</span></p>
+        <p class="muted">JS key-guard · cage = no window manager · VT-switch off (<code>srvrkeys:none</code> + <code>NAutoVTs=0</code>) · no cursor · admin is password-gated</p>
+        <aside class="notes">
+          Because it's a public booth, people will try to escape the kiosk and get to
+          the desktop — so we defend against it on several layers. A JavaScript guard
+          traps the obvious key combos — Alt-Tab, Alt-F4, F11, right-click — and
+          flashes the screen red instead. Below the browser, there is no desktop to
+          escape to: cage is a bare Wayland kiosk with no window manager. The
+          Ctrl-Alt-F-key virtual-terminal switch is disabled at the keyboard layer
+          with srvrkeys:none and in logind with NAutoVTs zero, so you can't drop to a
+          text console. The cursor is hidden, and the hidden admin functions —
+          shutdown, reboot, wifi — are all password-gated. Defense in depth, which is
+          very on-brand for DIVD.
+        </aside>
       </section>
 
       <!-- STACK -->
@@ -168,12 +267,24 @@
           <span class="a">systemd</span>
         </p>
         <p class="sub">one Pi · every part its own service</p>
+        <aside class="notes">
+          Software-wise: Django 6 for the web app, SQLite for storage, Pillow to draw
+          the receipts, cage plus Chromium for the kiosk display, and systemd to tie
+          it together. Each part is its own service, so any one can restart without
+          taking down the rest.
+        </aside>
       </section>
 
       <!-- MESSAGE -->
       <section data-background-color="#0a0a0a">
         <p class="kw" style="font-size:1.7em">"The internet belongs to everyone.<br><span style="color:var(--hacker-green)">So does its defense."</span></p>
         <p class="sub">Project Lacewing · 189 volunteers · 193 cases · 1.4M IPs notified</p>
+        <aside class="notes">
+          There's a message under the gag. The whole hacker theme carries DIVD's
+          Project Lacewing pitch — the internet belongs to everyone, so does its
+          defense. With the track record: 189 volunteers, 193 cases, 1.4 million IPs
+          notified.
+        </aside>
       </section>
 
       <!-- CLOSE -->
@@ -183,6 +294,11 @@
           <a href="https://karloluiten.github.io/divd-event-terminal/">karloluiten.github.io/divd-event-terminal</a>
         </p>
         <p class="sub">divd.nl · lacewing.nl</p>
+        <aside class="notes">
+          That's it — type, enter, take your receipt. You can try the UI live at the
+          link here, though printing and the lights only work on the real box.
+          Thanks — happy to take questions.
+        </aside>
       </section>
 
     </div>
