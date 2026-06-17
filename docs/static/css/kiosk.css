@@ -1,0 +1,677 @@
+/* ===== DIVD idea kiosk — tmux/hacker aesthetic ===== */
+@font-face{
+  font-family:"JetBrains Mono";
+  src:url("../fonts/JetBrainsMono.ttf") format("truetype");
+  font-weight:100 800;font-display:block;
+}
+@font-face{
+  font-family:"VT323";
+  src:url("../fonts/VT323.ttf") format("truetype");font-display:block;
+}
+@font-face{
+  font-family:"Share Tech Mono";
+  src:url("../fonts/ShareTechMono.ttf") format("truetype");font-display:block;
+}
+/* Fonts reused from the receipt printer so the easter-egg modes can restyle the
+   on-screen terminal while a mode is armed. */
+@font-face{font-family:"KioskComic";src:url("../fonts/comic.ttf") format("truetype");font-display:swap}
+@font-face{font-family:"KioskImpact";src:url("../fonts/impact.ttf") format("truetype");font-display:swap}
+@font-face{font-family:"KioskCreep";src:url("../fonts/creepster.ttf") format("truetype");font-display:swap}
+@font-face{font-family:"KioskPress";src:url("../fonts/pressstart.ttf") format("truetype");font-display:swap}
+@font-face{font-family:"KioskFraktur";src:url("../fonts/unifraktur.ttf") format("truetype");font-display:swap}
+@font-face{font-family:"KioskWing";src:url("../fonts/wingding.ttf") format("truetype");font-display:swap}
+@font-face{font-family:"KioskRye";src:url("../fonts/rye.ttf") format("truetype");font-display:swap}
+
+:root{
+  --bg:#05070a;
+  --panel:#0a0e12;
+  --fg:#23d18b;          /* tmux/terminal green */
+  --fg-dim:#0f6b47;
+  --amber:#ffd736;       /* DIVD yellow */
+  --cyan:#36d6ff;
+  --red:#ff3344;
+  --border:#7a5500;          /* DIVD-yellow pane borders (dimmed) */
+  --border-active:#ffb000;   /* DIVD yellow — active pane border */
+  --status-bg:#ffb000;       /* DIVD yellow — tmux bottom bar */
+  --status-fg:#1a1200;       /* near-black, reads on the yellow bar */
+  --font-mono:"JetBrains Mono","Share Tech Mono",monospace;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+/* Kiosk: never show scrollbars anywhere (they flashed on the left pane during
+   the glitch transform). Content still scrolls programmatically. */
+*{scrollbar-width:none;-ms-overflow-style:none}
+*::-webkit-scrollbar{width:0;height:0;display:none}
+html,body{height:100%;width:100%;overflow:hidden;background:var(--bg)}
+body{
+  font-family:var(--font-mono);
+  color:var(--fg);
+  cursor:none;                 /* kiosk: hide the mouse pointer */
+  user-select:none;
+  -webkit-user-select:none;
+  caret-color:transparent;
+  /* Fill the viewport exactly: panes grow, status bar is a fixed-height row.
+     Robust across any monitor resolution (no fixed-position offset hacks). */
+  display:flex;
+  flex-direction:column;
+  height:100vh;
+  height:100dvh;
+}
+
+/* ---- overall tmux grid: left pane | right column, status bar at bottom ---- */
+#tmux{
+  flex:1 1 auto;min-height:0;
+  display:grid;
+  grid-template-columns:1fr 2px minmax(360px,38%);
+  background:var(--bg);
+}
+.col-right{
+  display:grid;
+  grid-template-rows:1fr 2px minmax(180px,42%);
+  min-height:0;
+  position:relative;   /* anchor the "popped calc" overlay across both panes */
+}
+.pane-sep-v{background:var(--border)}
+.pane-sep-h{background:var(--border)}
+
+.pane{
+  position:relative;
+  background:var(--panel);
+  border:1px solid var(--border);
+  overflow:hidden;
+  min-height:0;min-width:0;
+  display:flex;flex-direction:column;
+}
+.pane-left{border-color:var(--border-active);box-shadow:inset 0 0 0 1px var(--border-active)}
+.pane-title{
+  flex:0 0 auto;position:relative;
+  font-size:12px;letter-spacing:.5px;
+  color:#7fe9c0;background:#06241a;
+  padding:2px 8px;border-bottom:1px solid var(--border);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+/* contextual "busy" header states (panetitle.js) */
+.pane-title.pt-busy{font-weight:700}
+.pane-title.pt-warn{background:#3a2a00;color:#ffd736;text-shadow:0 0 8px rgba(255,215,54,.6)}
+.pane-title.pt-evil{background:#350c0c;color:#ff6b6b;text-shadow:0 0 8px rgba(255,51,68,.6)}
+.pane-title.pt-dead{background:#101314;color:#9fb0ad}
+.pane-title.pt-good{background:#06301f;color:#7CFFB0;text-shadow:0 0 8px rgba(124,255,176,.6)}
+.pane-title.pt-busy::after{
+  content:"";position:absolute;top:0;bottom:0;left:-60px;width:60px;pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent);
+  animation:ptscan 1.15s linear infinite;
+}
+@keyframes ptscan{from{left:-60px}to{left:100%}}
+
+/* ---- terminal pane ---- */
+/* The Project Lacewing insect watches over the terminal: its logo is painted
+   very faintly behind the prompt (above the panel bg, below the text). Isolate
+   the pane's stacking context so the ::after sits cleanly under the content. */
+.pane-left{isolation:isolate}
+.pane-left::after{
+  content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:url("../img/lacewing-logo.svg") no-repeat center 56%;
+  background-size:min(66%,440px);
+  opacity:.06;
+}
+.pane-left .pane-title{z-index:2}
+.term{
+  flex:1 1 auto;min-height:0;position:relative;z-index:1;
+  padding:14px 16px;
+  /* ~20% smaller than before (was 31px); Ctrl +/- rescales this at runtime. */
+  font-size:25px;line-height:1.3;
+  text-align:left;
+  overflow:hidden;
+  display:flex;flex-direction:column;
+  text-shadow:0 0 6px rgba(35,209,139,.35);
+}
+#term-output{flex:0 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;white-space:pre-wrap;word-break:break-word}
+#term-output .ln{display:block}
+#term-output .echo{color:#bff7df}
+#term-output .info{color:var(--cyan)}
+#term-output .ok{color:var(--fg)}
+#term-output .err{color:var(--red)}
+#term-output .banner{color:var(--amber);text-shadow:0 0 8px rgba(255,215,54,.45);
+  font-size:.72em;line-height:1.1}
+#term-output .muted{color:var(--fg-dim)}
+
+.term-line{white-space:pre-wrap;word-break:break-word}
+.prompt{color:var(--amber)}
+.cmd{color:#eafff6}
+.cursor{
+  color:var(--fg);animation:blink 1s steps(1) infinite;
+  text-shadow:0 0 8px var(--fg);
+}
+@keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
+
+/* slash command menu */
+.slashmenu{
+  flex:0 1 auto;min-height:0;
+  margin-top:10px;border:1px solid var(--border);
+  background:#04130c;font-size:18px;overflow-y:auto;overflow-x:hidden;
+}
+.slashmenu .hint{
+  position:sticky;top:0;background:#04130c;
+  padding:4px 12px;color:var(--cyan);font-size:14px;
+  border-bottom:1px solid var(--border);
+}
+.slashmenu .row{padding:2px 12px;display:flex;gap:10px;white-space:nowrap}
+.slashmenu .row.sel{background:#0bbf6a;color:#04130c}
+.slashmenu .row .nm{color:var(--amber);min-width:165px}
+.slashmenu .row.sel .nm{color:#04130c}
+.slashmenu .row .ds{color:#7fe9c0;overflow:hidden;text-overflow:ellipsis}
+.slashmenu .row.sel .ds{color:#063b27}
+
+/* active-mode banner */
+.modebar{
+  margin-top:10px;padding:8px 12px;font-size:24px;
+  background:#2a1d00;border:1px solid var(--amber);color:var(--amber);
+  text-shadow:0 0 8px rgba(255,215,54,.5);
+}
+.modebar b{text-transform:uppercase}
+
+/* ---- htop pane ---- */
+.htop{
+  flex:1 1 auto;min-height:0;overflow:hidden;
+  font-size:13px;line-height:1.25;
+  padding:6px 8px;white-space:pre;
+  font-family:var(--font-mono);
+}
+.htop .bar{color:#444}
+.htop .lo{color:var(--fg)}
+.htop .me{color:var(--amber)}
+.htop .hi{color:var(--red)}
+.htop .lbl{color:var(--cyan)}
+.htop .hdr{background:var(--fg);color:#04130c}
+.htop .val{color:#bff7df}
+.htop .evil{color:var(--red);font-weight:700}
+.htop .good{color:#7CFFB0;font-weight:700;text-shadow:0 0 6px rgba(124,255,176,.45)}
+.htop .pid{color:#7fb0ff}
+.htop .usr{color:#c8a6ff}
+
+/* ---- glitch logo pane ---- */
+.pane-logo{background:#04060a}
+.logo-stage{
+  flex:1 1 auto;min-height:0;position:relative;
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;
+}
+.glitch-logo{position:relative;width:74%;max-width:520px;aspect-ratio:96/48}
+.glitch-logo .layer{
+  position:absolute;inset:0;width:100%;height:100%;
+}
+.glitch-logo .layer.base{fill:var(--amber);filter:drop-shadow(0 0 14px rgba(255,215,54,.55))}
+/* RGB-split layers are invisible at rest (pure DIVD yellow), only flaring
+   during a glitch burst when glitch.js adds .glitching. */
+.glitch-logo .layer.red{fill:var(--red);mix-blend-mode:screen;opacity:0}
+.glitch-logo .layer.cyan{fill:var(--cyan);mix-blend-mode:screen;opacity:0}
+.glitch-logo.glitching .layer.red{opacity:.85}
+.glitch-logo.glitching .layer.cyan{opacity:.85}
+.glitch-logo.glitching .layer.base{animation:slice .35s steps(2) infinite}
+.glitch-logo .layer.red{transform:translate(0,0)}
+.glitch-logo .layer.cyan{transform:translate(0,0)}
+@keyframes slice{
+  0%{clip-path:inset(0 0 0 0)}
+  20%{clip-path:inset(12% 0 60% 0)}
+  40%{clip-path:inset(55% 0 18% 0)}
+  60%{clip-path:inset(30% 0 40% 0)}
+  80%{clip-path:inset(70% 0 5% 0)}
+  100%{clip-path:inset(0 0 0 0)}
+}
+.scanlines{
+  position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(
+    to bottom,rgba(0,0,0,0) 0,rgba(0,0,0,0) 2px,
+    rgba(0,0,0,.28) 3px,rgba(0,0,0,.28) 4px);
+  mix-blend-mode:multiply;opacity:.6;
+  animation:roll 8s linear infinite;
+}
+@keyframes roll{0%{background-position:0 0}100%{background-position:0 100px}}
+.logo-tag{
+  position:absolute;bottom:8px;left:0;right:0;text-align:center;
+  font-size:11px;letter-spacing:3px;color:var(--fg-dim);
+}
+
+/* ---- "popped calc" finale in the bottom-right pane ---- */
+.calc-pop{
+  position:absolute;inset:0;z-index:30;display:none;
+  align-items:center;justify-content:center;pointer-events:none;
+}
+.calc-pop.show{display:flex}
+.calc-img{
+  max-width:72%;max-height:84%;image-rendering:pixelated;
+  border:1px solid #9a9a9a;box-shadow:0 8px 28px rgba(0,0,0,.75);
+  animation:calc-in .16s ease-out;
+}
+@keyframes calc-in{0%{transform:scale(.55);opacity:0}100%{transform:scale(1);opacity:1}}
+.calc-pop.glitchout .calc-img{animation:calc-glitch .5s steps(2) forwards}
+@keyframes calc-glitch{
+  0%{transform:translate(0)}
+  20%{transform:translate(-7px,3px) skewX(9deg);filter:invert(1) hue-rotate(90deg)}
+  40%{transform:translate(8px,-5px) skewX(-11deg);filter:contrast(3)}
+  60%{transform:translate(-5px,2px);filter:invert(1)}
+  80%{transform:translate(4px,-2px) scale(1.06);opacity:.5}
+  100%{transform:translate(0) scale(.7);opacity:0;filter:none}
+}
+
+/* ---- metasploit scroll takeover of the logo pane ---- */
+.msf-overlay{
+  position:absolute;inset:0;z-index:20;display:none;
+  background:rgba(2,8,5,.95);
+  font-family:var(--font-mono);font-size:12px;line-height:1.25;
+  color:var(--fg);padding:8px 10px;overflow:hidden;text-align:left;
+  white-space:pre-wrap;word-break:break-word;
+  text-shadow:0 0 5px rgba(35,209,139,.4);
+}
+.msf-overlay.show{display:block}
+.msf-overlay .l{display:block}
+.msf-overlay .info{color:var(--cyan)}
+.msf-overlay .good{color:var(--fg)}
+.msf-overlay .bad{color:var(--red)}
+.msf-overlay .prompt{color:var(--amber)}
+.msf-overlay .banner{color:var(--amber);text-shadow:0 0 6px rgba(255,215,54,.4)}
+.msf-overlay .val{color:#bff7df}
+
+/* ---- Project Lacewing pane takeover (lacewing.js) ---- */
+/* reuses .msf-overlay layout; greener glow + a mint accent for the good news */
+.lw-overlay{
+  text-shadow:0 0 6px rgba(124,255,176,.45);
+  background:rgba(2,12,7,.96);
+}
+.lw-overlay .good{color:#7CFFB0;font-weight:700}
+.lw-overlay .banner{color:#7CFFB0;text-shadow:0 0 8px rgba(124,255,176,.55)}
+
+/* ---- tmux status bar ---- */
+#statusbar{
+  flex:0 0 22px;
+  background:var(--status-bg);color:var(--status-fg);
+  display:flex;justify-content:space-between;align-items:center;
+  padding:0 8px;font-size:13px;font-weight:600;letter-spacing:.3px;
+}
+.sb-win{padding:0 6px;opacity:.75}
+.sb-win-active{background:#04130c;color:#0bbf6a;opacity:1;padding:0 8px}
+.sb-right{font-variant-numeric:tabular-nums;display:inline-flex;align-items:center}
+/* LED settings OSD: dark pills on the yellow bar, shown ~5s on change */
+#sb-osd{display:none}
+#sb-osd.show{display:inline-flex;gap:7px;margin-right:10px;align-items:center}
+.sb-osd-item{background:#1a1200;color:#ffb000;font-weight:700;letter-spacing:.5px;
+  padding:0 7px;border:1px solid rgba(26,18,0,.6);border-radius:3px;
+  font-variant-numeric:tabular-nums;box-shadow:inset 0 0 4px rgba(0,0,0,.5)}
+.sb-demo{display:flex;align-items:center;gap:7px;color:var(--amber);font-weight:700;
+  letter-spacing:.3px;text-shadow:0 0 8px rgba(255,215,54,.55)}
+.sb-demo-track{display:inline-block;width:160px;height:11px;background:#000;
+  border:1px solid var(--amber);box-shadow:0 0 7px rgba(255,215,54,.6),inset 0 0 4px #000}
+.sb-demo-track i{display:block;height:100%;width:100%;background:var(--amber);
+  box-shadow:0 0 8px rgba(255,215,54,.9);transition:width .25s linear}
+.sb-demo-secs{font-variant-numeric:tabular-nums;min-width:30px;text-align:right}
+
+/* ---- breakout-defense red flash ---- */
+.guard-flash{
+  position:fixed;inset:0;z-index:9999;display:none;
+  align-items:center;justify-content:center;
+  background:rgba(180,0,16,.92);
+  animation:flashpulse .4s steps(2) 6;
+}
+.guard-flash.show{display:flex}
+@keyframes flashpulse{0%{background:rgba(180,0,16,.95)}50%{background:rgba(40,0,4,.95)}100%{background:rgba(180,0,16,.95)}}
+.guard-msg{text-align:center;color:#fff;font-family:var(--font-mono);text-shadow:0 0 12px #000}
+.guard-title{font-size:54px;font-weight:800;letter-spacing:2px}
+.guard-sub{font-size:26px;margin-top:14px;color:#ffd0d4}
+.guard-foot{font-size:18px;margin-top:26px;opacity:.9}
+
+/* ---- char-limit warning (under the terminal) ---- */
+.charwarn{
+  flex:0 0 auto;margin:8px 16px 0;padding:6px 12px;font-size:20px;
+  background:#2a1d00;border:1px solid var(--amber);color:var(--amber);
+}
+.charwarn.at-limit{background:#2a0008;border-color:var(--red);color:#ff8a93}
+
+/* ---- Konami matrix-rain overlay ---- */
+#matrix-canvas{
+  position:fixed;inset:0;z-index:9000;pointer-events:none;display:none;
+  background:rgba(0,0,0,.55);
+}
+#matrix-canvas.show{display:block}
+.cheat-banner{
+  position:fixed;top:8%;left:0;right:0;z-index:9001;text-align:center;
+  display:none;font-family:var(--font-mono);color:var(--fg);
+  text-shadow:0 0 12px var(--fg),0 0 24px var(--fg);
+}
+.cheat-banner.show{display:block;animation:cheatpop .5s ease-out}
+.cheat-banner .big{font-size:48px;font-weight:800;letter-spacing:3px}
+.cheat-banner .small{font-size:22px;margin-top:8px;color:var(--amber)}
+@keyframes cheatpop{0%{transform:scale(.6);opacity:0}100%{transform:scale(1);opacity:1}}
+
+/* ---- DVD-bounce mode for the logo ---- */
+/* Bounce uses fixed positioning (viewport coords) so it can also "escape"
+   its pane and roam the whole screen once per session. */
+.glitch-logo.bouncing{
+  position:fixed;width:24%;left:0;top:0;z-index:50;
+  transition:filter .2s,width .38s ease;will-change:left,top;
+}
+.glitch-logo.escaped{z-index:8000}
+
+/* ---- fake BSOD easter egg (/bsod) ---- */
+#bsod{
+  position:fixed;inset:0;z-index:9500;display:none;
+  background:#0000aa;color:#fff;font-family:var(--font-mono);
+  padding:7% 9%;font-size:24px;line-height:1.7;
+}
+#bsod.show{display:block}
+#bsod .sad{font-size:72px;margin-bottom:18px}
+#bsod .hint{margin-top:30px;opacity:.85;font-size:20px}
+
+/* ---- fakeupdate.net-style fullscreen fake OS update screens ---- */
+/* Hidden commands /winupdate, /macupdate, /ubuntu, /update. Any key dismisses
+   (handled in fakeupdate.js). A sans stack makes these read as an OS screen,
+   not the terminal. */
+#fakeupdate{
+  position:fixed;inset:0;z-index:9600;display:none;
+  flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;color:#fff;cursor:none;
+  font-family:system-ui,"Segoe UI",Roboto,"DejaVu Sans",Arial,sans-serif;
+}
+#fakeupdate.show{display:flex}
+#fakeupdate.win{background:#0067b8}
+#fakeupdate.mac{background:#000}
+#fakeupdate.ubuntu{background:#2c001e}
+
+.fu-inner{max-width:80%}
+.fu-msg{font-size:40px;font-weight:300;margin-top:8px}
+.fu-pct{font-size:26px;font-weight:300;margin-top:14px}
+.fu-sub{font-size:20px;font-weight:300;margin-top:34px;opacity:.85}
+.fu-hint{font-size:16px;margin-top:42px;opacity:.55;font-family:var(--font-mono)}
+
+/* orbiting-dot spinner (Windows-style) */
+.fu-spinner{
+  position:relative;width:64px;height:64px;margin:0 auto 40px;
+  animation:fu-spin 1.4s linear infinite;
+}
+.fu-spinner i{
+  position:absolute;top:0;left:50%;width:8px;height:8px;margin-left:-4px;
+  border-radius:50%;background:#fff;transform-origin:4px 32px;
+}
+@keyframes fu-spin{to{transform:rotate(360deg)}}
+
+/* macOS skin: Apple logo + thin progress bar */
+.fu-apple{width:90px;height:auto;fill:#fff;margin-bottom:46px}
+.fu-bar{
+  width:340px;max-width:60vw;height:6px;margin:0 auto;border-radius:3px;
+  background:rgba(255,255,255,.28);overflow:hidden;
+}
+.fu-bar-fill{height:100%;width:0;background:#fff;transition:width .5s ease}
+.fu-min{font-size:18px;font-weight:300;margin-top:28px;opacity:.8}
+
+/* Ubuntu wordmark */
+.fu-ubuntu{
+  font-size:46px;font-weight:600;letter-spacing:1px;margin-bottom:34px;
+  color:#fff;
+}
+.fu-ubuntu::before{content:"◜◝ ";color:#e95420;font-weight:700}
+
+/* ---- WannaCry parody screen (/wannacry, /wnc) — like fakeupdate.net/wnc ---- */
+#wannacry{
+  position:fixed;inset:0;z-index:9700;display:none;
+  background:#0a0a0a;cursor:none;
+  align-items:center;justify-content:center;flex-direction:column;
+  font-family:system-ui,"Segoe UI","DejaVu Sans",Arial,sans-serif;
+}
+#wannacry.show{display:flex}
+.wc-window{
+  width:760px;max-width:94vw;max-height:88vh;overflow:hidden;
+  background:#b51e1e;color:#fff;border:1px solid #d4d0c8;
+  box-shadow:0 12px 60px rgba(0,0,0,.7);display:flex;flex-direction:column;
+}
+.wc-titlebar{
+  background:#8b1414;display:flex;justify-content:space-between;align-items:center;
+  padding:5px 10px;font-size:15px;border-bottom:1px solid #6e0f0f;
+}
+.wc-tl{display:flex;align-items:center;gap:8px}
+.wc-tl svg,.wc-tr{fill:#fff}
+.wc-titlebar svg{width:16px;height:16px}
+.wc-tr{font-size:13px;opacity:.85;letter-spacing:4px}
+.wc-body{display:flex;min-height:0}
+
+.wc-left{
+  flex:0 0 220px;background:#a01818;padding:16px 14px;text-align:center;
+  border-right:1px solid #d4d0c8;
+}
+.wc-lock svg{width:74px;height:74px;fill:#fff;margin-bottom:14px}
+.wc-box{background:#7e1010;border:1px solid #d4d0c8;padding:8px;margin-bottom:12px}
+.wc-box-h{font-size:13px;opacity:.9}
+.wc-date{font-size:15px;font-weight:700;margin:2px 0 6px}
+.wc-count{font-family:var(--font-mono);font-size:22px;color:#ffe14d;font-weight:700}
+.wc-links{font-size:13px;line-height:2;text-decoration:underline;opacity:.92}
+
+.wc-right{flex:1 1 auto;min-width:0;padding:16px 20px;overflow-y:auto}
+.wc-headline{font-size:24px;font-weight:700;margin-bottom:12px}
+.wc-sec-h{font-weight:700;font-size:16px;margin:12px 0 4px}
+.wc-right p{font-size:14px;line-height:1.5;opacity:.95}
+.wc-pay{
+  margin-top:14px;background:#7e1010;border:1px solid #d4d0c8;padding:10px;font-size:14px;
+}
+.wc-addr{
+  font-family:var(--font-mono);font-size:14px;background:#fff;color:#111;
+  padding:6px 8px;margin-top:6px;word-break:break-all;
+}
+.wc-btns{margin-top:14px;display:flex;gap:12px}
+.wc-btn{
+  background:#e6e2da;color:#111;border:1px solid #6e0f0f;padding:7px 18px;
+  font-size:14px;font-weight:600;
+}
+.wc-btn-go{background:#ffe14d}
+.wc-hint{margin-top:14px;font-size:14px;color:#bbb;font-family:var(--font-mono)}
+
+/* the reveal: it was a prank + security tips */
+.wc-reveal{
+  max-width:760px;padding:24px 28px;text-align:center;color:#eafff6;
+  font-family:var(--font-mono);
+}
+.wc-r-emoji{font-size:64px;margin-bottom:6px}
+.wc-reveal h1{font-size:40px;color:var(--amber);margin-bottom:14px;
+  text-shadow:0 0 10px rgba(255,215,54,.5)}
+.wc-r-lead{font-size:22px;margin-bottom:14px}
+.wc-reveal p{font-size:17px;line-height:1.5;margin-bottom:12px}
+.wc-tips{
+  text-align:left;display:inline-block;margin:6px auto 0;font-size:16px;
+  line-height:1.55;color:#bff7df;
+}
+.wc-tips li{margin-bottom:8px}
+.wc-tips b{color:var(--amber)}
+
+/* ---- fullscreen image easter eggs (/cat, /hackerman) ---- */
+#imgegg{
+  position:fixed;inset:0;z-index:9650;display:none;
+  flex-direction:column;align-items:center;justify-content:center;
+  background:#000;cursor:none;
+}
+#imgegg.show{display:flex}
+.imgegg-pic{
+  max-width:92vw;max-height:82vh;object-fit:contain;
+  box-shadow:0 0 40px rgba(0,0,0,.85);
+}
+.imgegg-cap{
+  margin-top:18px;font-size:30px;letter-spacing:2px;color:var(--amber);
+  font-family:var(--font-mono);text-shadow:0 0 10px rgba(255,215,54,.5);
+}
+.imgegg-hint{
+  margin-top:14px;font-size:16px;opacity:.5;color:#fff;
+  font-family:var(--font-mono);
+}
+
+/* ---- whole-screen random glitch blips ---- */
+body.screenglitch{animation:scrglitch .28s steps(2) 1}
+@keyframes scrglitch{
+  0%{transform:translate(0,0);filter:none}
+  25%{transform:translate(-4px,2px) skewX(2deg);filter:invert(1) hue-rotate(80deg)}
+  50%{transform:translate(5px,-3px) skewX(-3deg)}
+  75%{transform:translate(-2px,1px);filter:contrast(2)}
+  100%{transform:translate(0,0);filter:none}
+}
+
+/* ---- htop alternate "classic computer" screens ---- */
+.htop .dfg{letter-spacing:1px}
+.htop .dfg-used{color:var(--cyan)}     /* used block */
+.htop .dfg-free{color:#1b3a2c}         /* free space */
+.htop .dfg-read{color:var(--amber)}    /* reading */
+.htop .dfg-opt{color:var(--fg)}        /* optimized */
+.htop .dfg-bad{color:var(--red)}       /* bad cluster */
+.htop .scr-title{background:var(--cyan);color:#04130c}
+.htop .scr-hi{color:var(--amber)}
+.htop .scr-ok{color:var(--fg)}
+
+/* ===== armed-mode screen effects =====
+   When a print mode is armed (terminal.js adds body.mode-<name>), restyle the
+   screen so the kiosk previews the vibe. Font-swap modes restyle the left
+   terminal; mirror flips the right column; a few do their own thing. The
+   output-only modes (qr, barcode, ascii) have no meaningful live preview. */
+
+/* font-swap modes — left terminal text */
+.mode-comicsans .term{font-family:"KioskComic","Comic Sans MS",var(--font-mono)}
+.mode-shout .term{font-family:"KioskImpact",Impact,var(--font-mono);
+  text-transform:uppercase;letter-spacing:1px}
+.mode-fancy .term{font-family:"KioskFraktur",serif}
+.mode-wingdings .term{font-family:"KioskWing",var(--font-mono)}
+.mode-spooky .term{font-family:"KioskCreep",fantasy,var(--font-mono);
+  color:#7CFC00;text-shadow:0 0 10px #39ff14,0 0 22px #066b00}
+.mode-spooky .prompt,.mode-spooky .cursor{color:#39ff14;text-shadow:0 0 10px #39ff14}
+.mode-retro .term{font-family:"KioskPress",var(--font-mono);font-size:15px!important;
+  color:var(--amber);text-shadow:0 0 6px rgba(255,215,54,.6);line-height:1.5}
+
+/* old-west WANTED — sepia paper, dark ink */
+.mode-wanted .pane-left,.mode-wanted .term{background:#d8c39a}
+.mode-wanted .term{font-family:"KioskRye",serif}
+.mode-wanted .term,.mode-wanted .term *{color:#3a2414!important;text-shadow:none!important}
+
+/* size modes (override the Ctrl +/- inline size while armed) */
+.mode-big .term{font-size:46px!important}
+.mode-tiny .term{font-size:14px!important}
+
+/* l33t — green matrix glow */
+.mode-leet .term{color:#39ff14;text-shadow:0 0 8px #39ff14}
+.mode-leet .echo{color:#9dffb0}
+
+/* redacted — illegible/censored output (live prompt stays sharp) */
+.mode-redacted #term-output .ln{filter:blur(3px)}
+
+/* glitch — the whole left pane datamoshes while armed */
+.mode-glitch .pane-left{animation:scrglitch .6s steps(2) infinite}
+
+/* upside down */
+.mode-upsidedown .term{transform:rotate(180deg)}
+
+/* mirror — flip the htop + DIVD-logo panes (per request) */
+.mode-mirror #pane-htop,.mode-mirror #pane-logo{transform:scaleX(-1)}
+
+/* slash-menu mode preview, shown in the htop pane (#htop) while choosing a mode.
+   The .mode-<name> wrapper reuses the live-preview CSS above so the sample looks
+   like the real printout. */
+#htop .modepreview{height:100%;display:flex;flex-direction:column;gap:8px;
+  padding:10px 12px;overflow:hidden}
+.modepreview .mp-head{color:#ffb000;font-weight:700;letter-spacing:.4px}
+.modepreview .mp-label{opacity:.65;font-weight:400}
+.modepreview .mp-desc{color:var(--fg-dim);font-size:13px}
+.modepreview .mp-sample{flex:1;display:flex;align-items:center;justify-content:center;
+  border:1px dashed var(--border);background:#05070a;padding:10px;overflow:hidden}
+.modepreview .mp-sample .term{font-size:18px;line-height:1.45;text-align:center;max-width:100%;
+  word-break:break-word}
+.modepreview .mp-foot{color:var(--fg-dim);font-size:11px;opacity:.7;text-align:center}
+/* echo modes whose real selectors target elements outside this preview wrapper */
+.modepreview.mode-big .term{font-size:30px!important}
+.modepreview.mode-tiny .term{font-size:13px!important}
+.modepreview.mode-redacted .ln{filter:blur(3px)}
+.modepreview.mode-glitch{animation:scrglitch .6s steps(2) infinite}
+.modepreview.mode-mirror .term{transform:scaleX(-1)}
+
+/* ===== old-CRT power off / power on — DIVD logo pane only (crt.js) ===== */
+/* The logo "screen" (#logo-stage) collapses to a line, then a dot, then dark. */
+#logo-stage{transform-origin:center center}
+#logo-stage.crt-off{animation:crtOff .52s cubic-bezier(.55,0,.75,.2) forwards}
+#logo-stage.crt-on{animation:crtOn .72s cubic-bezier(.2,.7,.3,1) forwards}
+@keyframes crtOff{
+  0%  {transform:scale(1,1);     opacity:1;filter:brightness(1)}
+  55% {transform:scale(1,.012);  opacity:1;filter:brightness(3.6) contrast(1.5)}
+  82% {transform:scale(.32,.012);opacity:1;filter:brightness(6)}
+  100%{transform:scale(0,0);     opacity:0;filter:brightness(12)}
+}
+@keyframes crtOn{
+  0%  {transform:scale(0,0);     opacity:0;filter:brightness(12)}
+  30% {transform:scale(1,.012);  opacity:1;filter:brightness(4) contrast(1.4)}
+  55% {transform:scale(1,1.04);  opacity:1;filter:brightness(1.7)}
+  78% {transform:scale(1,.99);             filter:brightness(1.15)}
+  100%{transform:scale(1,1);     opacity:1;filter:brightness(1)}
+}
+.crt-ov{position:absolute;z-index:30;display:none;pointer-events:none;
+  background:transparent;overflow:hidden}
+.crt-ov.show{display:block}
+.crt-beam{
+  position:absolute;left:0;right:0;top:50%;height:3px;background:#fff;
+  box-shadow:0 0 14px 4px #fff,0 0 44px 12px rgba(255,255,255,.55);
+  transform:translateY(-50%) scaleX(1);transform-origin:center center;opacity:0;
+}
+.crt-beam.off{animation:beamOff .9s ease-in forwards}
+.crt-beam.on{animation:beamOn .6s ease-out forwards}
+@keyframes beamOff{
+  0%,42%{opacity:0;transform:translateY(-50%) scaleX(1)    scaleY(1)}
+  52%   {opacity:1;transform:translateY(-50%) scaleX(1)    scaleY(1)}
+  78%   {opacity:1;transform:translateY(-50%) scaleX(.004) scaleY(3)}
+  100%  {opacity:0;transform:translateY(-50%) scaleX(.004) scaleY(3)}
+}
+@keyframes beamOn{
+  0%  {opacity:1;transform:translateY(-50%) scaleX(.004) scaleY(3)}
+  35% {opacity:1;transform:translateY(-50%) scaleX(1)    scaleY(1)}
+  100%{opacity:0;transform:translateY(-50%) scaleX(1)    scaleY(1)}
+}
+
+/* ===== old-terminal green phosphor glow on the tmux frame ===== */
+/* Panes tile flush, so an OUTER glow gets painted over by neighbours — the
+   visible glow is an inset ring inside each pane plus bright, glowing borders
+   and separators (the "tmux frame"). */
+.pane{
+  border-color:rgba(35,209,139,.55);
+  box-shadow:inset 0 0 26px rgba(35,209,139,.20),inset 0 0 2px rgba(35,209,139,.5);
+}
+.pane-left{
+  border-color:var(--border-active);
+  box-shadow:inset 0 0 0 1px var(--border-active),inset 0 0 34px rgba(35,209,139,.26);
+}
+/* The tmux separators glow brightly like phosphor-lit borders. */
+.pane-sep-v,.pane-sep-h{
+  background:var(--border-active);
+  box-shadow:0 0 10px 2px rgba(35,209,139,.85),0 0 4px rgba(35,209,139,1);
+}
+.pane-title{box-shadow:0 0 10px rgba(35,209,139,.25)}
+#statusbar{box-shadow:0 0 14px rgba(11,191,106,.6)}
+
+/* ===== root-mode (after sudo) glowing rainbow prompt ===== */
+.prompt.root-rainbow{
+  background:linear-gradient(90deg,#ff3344,#ffd736,#23d18b,#36d6ff,#b388ff,#ff3344);
+  background-size:200% auto;-webkit-background-clip:text;background-clip:text;
+  color:transparent;-webkit-text-fill-color:transparent;
+  animation:rainbow 1.8s linear infinite;
+  filter:drop-shadow(0 0 6px rgba(255,255,255,.55));
+}
+@keyframes rainbow{to{background-position:200% center}}
+
+/* ===== self-playing ASCII breakout in the htop pane (breakout.js) ===== */
+.bo-overlay{position:absolute;inset:0;z-index:25;display:none;background:#02060a}
+.bo-overlay.show{display:block}
+.bo-screen{margin:0;padding:3px 4px;white-space:pre;overflow:hidden;
+  font:13px/1.25 var(--font-mono);color:#cfe;
+  text-shadow:0 0 6px rgba(54,214,255,.25)}
+
+/* ===== ASCII fireworks on print (fireworks.js) ===== */
+#fireworks{
+  position:fixed;inset:0;pointer-events:none;z-index:60;overflow:hidden;
+  display:none;font-family:var(--font-mono);font-weight:700;
+}
+#fireworks.on{display:block}
+#fireworks span{
+  position:absolute;left:0;top:0;font-size:20px;line-height:1;
+  will-change:transform,opacity;text-shadow:0 0 8px currentColor;
+}
+
+/* metasploit session "hold for review" countdown bar (metasploit.js) */
+.msf-bar{display:inline-block;width:120px;height:8px;margin-left:8px;
+  vertical-align:middle;border:1px solid currentColor;box-shadow:0 0 6px currentColor}
+.msf-bar i{display:block;height:100%;width:100%;background:currentColor}
